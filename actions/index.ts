@@ -162,6 +162,9 @@ export async function updateProfile(bio: string, avatarFile: File) {
       bio,
       updated_at: new Date().toISOString(),
     };
+
+    if (!bio && !avatarFile)
+      return { error: "Please fill at least one field!" };
     if (avatarFile && avatarFile.size > 0) {
       if (!avatarFile.type.startsWith("image/")) {
         return { error: "File must be an image" };
@@ -185,6 +188,11 @@ export async function updateProfile(bio: string, avatarFile: File) {
         .eq("id", user.id);
       if (dbError) return { error: dbError.message };
     }
+    const { error: dbError } = await supabase
+      .from("profiles")
+      .update(updates)
+      .eq("id", user.id);
+    if (dbError) return { error: dbError.message };
 
     revalidatePath(`app/profile/${user.id}`);
     return { success: true };
